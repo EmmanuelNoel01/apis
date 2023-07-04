@@ -54,19 +54,17 @@
         // Define the diseases to count
         $diseases = ['malaria', 'typhoid', 'hiv/aids'];
 
-        // Initialize an array to store the disease counts for each month and each division
+        // Initialize an array to store the disease counts for each month
         $diseaseCountsByMonth = [];
-        $diseaseCountsByDivision = [];
 
         // Retrieve the disease data from the patients table
-        $sql = "SELECT disease, month, division FROM patients";
+        $sql = "SELECT disease, month FROM patients";
         $result = $conn->query($sql);
 
         if ($result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
                 $disease = strtolower($row['disease']);
                 $month = strtolower($row['month']);
-                $division = strtolower($row['division']);
 
                 // Increment the count for the specific disease and month
                 if (in_array($disease, $diseases)) {
@@ -74,15 +72,6 @@
                         $diseaseCountsByMonth[$month][$disease] = 1;
                     } else {
                         $diseaseCountsByMonth[$month][$disease]++;
-                    }
-                }
-                
-                // Increment the count for the specific division
-                if (in_array($division, ['makindye', 'kampala central', 'kampala', 'nakawa', 'lubaga'])) {
-                    if (!isset($diseaseCountsByDivision[$division])) {
-                        $diseaseCountsByDivision[$division] = 1;
-                    } else {
-                        $diseaseCountsByDivision[$division]++;
                     }
                 }
             }
@@ -110,18 +99,6 @@
 
             // Display the chart
             echo '<canvas id="chart"></canvas>';
-
-            // Display the division-wise disease counts in a table
-            echo '<h3>Division-wise Disease Counts</h3>';
-            echo '<table>';
-            echo '<tr><th>Division</th><th>Number Tested</th></tr>';
-            foreach ($diseaseCountsByDivision as $division => $count) {
-                echo '<tr>';
-                echo '<td>' . ucfirst($division) . '</td>';
-                echo '<td>' . $count . '</td>';
-                echo '</tr>';
-            }
-            echo '</table>';
 
             // Close the database connection
             $conn->close();

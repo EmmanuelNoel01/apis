@@ -23,12 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($result->num_rows > 0) {
         $response = array('status' => 'success');
+        echo json_encode($response);
+        exit; // Terminate further execution
+
     } else {
         $response = array('status' => 'failure');
+        echo json_encode($response);
+        exit; // Terminate further execution
     }
-
-    header('Content-Type: application/json');
-    echo json_encode($response);
 }
 
 $conn->close();
