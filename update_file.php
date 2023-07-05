@@ -34,13 +34,6 @@
             cursor: pointer;
         }
 
-        .back-button {
-            background-color: green;
-            color: white;
-            padding: 5px 10px;
-            text-decoration: none;
-        }
-
         .file-preview {
             display: none;
             margin-bottom: 10px;
@@ -49,6 +42,13 @@
         .file-preview img {
             max-width: 200px;
             max-height: 200px;
+        }
+
+        .back-button {
+            background-color: green;
+            color: white;
+            padding: 5px 10px;
+            text-decoration: none;
         }
     </style>
     <script>
@@ -80,66 +80,45 @@
         <h2>Update File</h2>
 
         <?php
-        // Check if the file IDs are provided
-        if (isset($_POST['selected_files'])) {
-            // Retrieve the selected file IDs
-            $selected_files = $_POST['selected_files'];
+        // PHP code for file update logic
 
-            // Define the database connection details
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $servername = "localhost";
             $username = "root";
             $password = "";
-            $database = "hosptial";
+            $dbname = "hosptial";
 
-            // Create a database connection
-            $conn = new mysqli($servername, $username, $password, $database);
-
-            // Check if the connection was successful
+            $conn = new mysqli($servername, $username, $password, $dbname);
             if ($conn->connect_error) {
                 die("Connection failed: " . $conn->connect_error);
             }
 
-            foreach ($selected_files as $file_id) {
-                // Retrieve the file details from the database
-                $stmt = $conn->prepare("SELECT file_name, file_data FROM medicalreport WHERE id = ?");
-                $stmt->bind_param("i", $file_id);
-                $stmt->execute();
-                $stmt->bind_result($file_name, $file_data);
-                $stmt->fetch();
-                $stmt->close();
+            $file = $_FILES['report'];
+            $fileName = $file['name'];
+            $fileData = file_get_contents($file['tmp_name']);
 
-                // Check if the file exists
-                if ($file_name) {
-                    // Check if the form was submitted
-                    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-                        // Check if a new file was uploaded
-                        if ($_FILES["report"]["size"] > 0) {
-                            // Retrieve the updated file contents
-                            $updated_file_data = $_FILES["report"]["tmp_name"];
-
-                            // Update the file data in the database
-                            $stmt = $conn->prepare("UPDATE medicalreport SET file_data = ? WHERE id = ?");
-                            $stmt->bind_param("si", $updated_file_data, $file_id);
-                            $stmt->send_long_data(0, file_get_contents($updated_file_data));
-                            $stmt->execute();
-                            $stmt->close();
-                        }
-                    }
+            // Check if the file already exists in the database
+            $checkQuery = "SELECT * FROM medicalreport WHERE file_name = '$fileName'";
+            $checkResult = $conn->query($checkQuery);
+            if ($checkResult->num_rows > 0) {
+                // Update the existing file
+                $updateQuery = "UPDATE medicalreport SET file_data = '$fileData' WHERE file_name = '$fileName'";
+                if ($conn->query($updateQuery) === TRUE) {
+                    echo "File updated successfully.";
                 } else {
-                    // File not found
-                    echo "File not found for ID: " . $file_id;
+                    echo "Error updating file: " . $conn->error;
+                }
+            } else {
+                // Insert a new file
+                $insertQuery = "INSERT INTO medicalreport (file_name, file_data) VALUES ('$fileName', '$fileData')";
+                if ($conn->query($insertQuery) === TRUE) {
+                    echo "File inserted successfully.";
+                } else {
+                    echo "Error inserting file: " . $conn->error;
                 }
             }
 
-            // Redirect to the reports page after updating the files
-            header("Location: reports.php");
-            exit;
-
-            // Close the database connection
             $conn->close();
-        } else {
-            // File IDs not provided
-            echo "";
         }
         ?>
 
